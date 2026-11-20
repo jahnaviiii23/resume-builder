@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Resume Builder — Pure HTML &amp; CSS</title>
+
+  <style>
+    /* ==========================================================================
+       1. CSS VARIABLES (Edit these to customize theme colors, fonts & spacing)
+       ========================================================================== */
+    :root {
+      /* Typography: single clean sans-serif family for high readability */
+      --font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+      /* App UI Colors */
+      --ui-bg: #f1f5f9;
+      --ui-surface: #ffffff;
+      --ui-border: #cbd5e1;
+      --ui-text: #0f172a;
+      --ui-muted: #475569;
+      --ui-primary: #1d4ed8;
+      --ui-primary-hover: #1e40af;
+      --ui-focus-ring: rgba(29, 78, 216, 0.22);
+
+      /* Resume Theme Colors */
+      --resume-bg: #ffffff;
+      --resume-text: #1e293b;
+      --resume-muted: #475569;
+      --resume-accent: #1e3a8a;
+      --resume-accent-soft: #eff6ff;
+      --resume-border: #cbd5e1;
+
+      /* Layout & Radii */
+      --radius-md: 8px;
+      --radius-sm: 5px;
+      --shadow-card: 0 4px 14px rgba(15, 23, 42, 0.06);
+      --shadow-paper: 0 12px 32px rgba(15, 23, 42, 0.12);
+    }
+
+    /* ==========================================================================
+       2. RESET & BASE STYLES
+       ========================================================================== */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--ui-bg);
+      color: var(--ui-text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* Accessible screen-reader-only helper for hidden radio/checkbox inputs */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ==========================================================================
+       3. TOP TOOLBAR & CSS-ONLY TEMPLATE SWITCHER
+       ========================================================================== */
+    .app-header {
+      background-color: var(--ui-surface);
+      border-bottom: 1px solid var(--ui-border);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--ui-text);
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--ui-muted);
+    }
+
+    .toolbar-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Segmented Template Switcher */
+    .template-switcher {
+      display: inline-flex;
+      align-items: center;
+      background-color: var(--ui-bg);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--ui-border);
+      gap: 4px;
+    }
+
+    .switcher-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--ui-muted);
+      padding: 0 8px;
+    }
+
+    .tpl-btn {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ui-muted);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+      user-select: none;
+    }
+
+    .tpl-btn:hover {
+      color: var(--ui-text);
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Active template tab highlighting using general sibling combinator (~) */
+    #tpl-classic:checked ~ .app-header label[for="tpl-classic"],
+    #tpl-modern:checked ~ .app-header label[for="tpl-modern"],
+    #tpl-minimal:checked ~ .app-header label[for="tpl-minimal"] {
+      background-color: var(--ui-surface);
+      color: var(--ui-primary);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Keyboard focus outlines for hidden radio inputs */
+    #tpl-classic:focus-visible ~ .app-header label[for="tpl-classic"],
+    #tpl-modern:focus-visible ~ .app-header label[for="tpl-modern"],
+    #tpl-minimal:focus-visible ~ .app-header label[for="tpl-minimal"],
+    #print-guide-toggle:focus-visible ~ .app-header .btn-print {
+      outline: 2px solid var(--ui-primary);
+      outline-offset: 2px;
+    }
+
+    /* Download / Print Button */
+    .btn-print {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--ui-primary);
+      color: #ffffff;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      user-select: none;
+    }
+
+    .btn-print:hover {
+      background-color: var(--ui-primary-hover);
+    }
+
+    .btn-print:active {
+      transform: translateY(1px);
+    }
+
+    /* CSS-only Print Instruction Banner (toggled by #print-guide-toggle) */
+    .print-guide-banner {
+      display: none;
+      background-color: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      padding: 12px 24px;
+      font-size: 0.88rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    #print-guide-toggle:checked ~ .print-guide-banner {
+      display: flex;
+    }
+
+    .btn-close-guide {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1e3a8a;
+      background: #dbeafe;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-close-guide:hover {
+      background: #bfdbfe;
+    }
+
+    /* ==========================================================================
+       4. TWO-COLUMN WORKSPACE LAYOUT
+       ========================================================================== */
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(340px, 440px) 1fr;
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      align-items: start;
+    }
+
+    /* ==========================================================================
+       5. LEFT PANEL: FORM / EDITOR
+       ========================================================================== */
+    .editor-panel {
+      background-color: var(--ui-surface);
+      border: 1px solid var(--ui-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      padding: 20px;
+    }
+
+    .editor-heading {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .editor-note {
+      font-size: 0.82rem;
+      color: var(--ui-muted);
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--ui-border);
+    }
+
+    .resume-form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-section {
+      border: 1px solid var(--ui-border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      background-color: #fafcff;
+    }
+
+    .form-section legend {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--ui-primary);
+      padding: 0 6px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .form-grid .field {
+      margin-top: 0;
+    }
+
+    .field.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ui-text);
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.86rem;
+      color: var(--ui-text);
+      background-color: #ffffff;
+      border: 1px solid var(--ui-border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 74px;
+    }
+
+    .field input:hover,
+    .field textarea:hover {
+      border-color: #94a3b8;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--ui-primary);
+      box-shadow: 0 0 0 3px var(--ui-focus-ring);
+    }
+
+    /* Repeated Entry Cards (Work Experience / Education) */
+    .entry-group {
+      border-top: 1px dashed var(--ui-border);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+
+    .entry-group:first-of-type {
+      border-top: none;
+      padding-top: 4px;
+      margin-top: 4px;
+    }
+
+    .entry-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ui-muted);
+      margin-bottom: 8px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 4px;
+    }
+
+    .btn-secondary {
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--ui-muted);
+      background-color: var(--ui-bg);
+      border: 1px solid var(--ui-border);
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+      color: var(--ui-text);
+    }
+
+    .btn-secondary:focus-visible {
+      outline: 2px solid var(--ui-primary);
+      outline-offset: 2px;
+    }
+
+    /* ==========================================================================
+       6. RIGHT PANEL: A4 RESUME PREVIEW
+       ========================================================================== */
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .preview-hint {
+      font-size: 0.82rem;
+      color: var(--ui-muted);
+      background-color: var(--ui-surface);
+      border: 1px solid var(--ui-border);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    /* A4 Proportions (210mm x 297mm ≈ 794px x 1123px at 96dpi) */
+    .resume-sheet {
+      width: 100%;
+      max-width: 794px;
+      min-height: 1123px;
+      background-color: var(--resume-bg);
+      color: var(--resume-text);
+      box-shadow: var(--shadow-paper);
+      border-radius: 4px;
+      padding: 42px 46px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* Subtle hover/focus cues for inline editable regions */
+    [contenteditable="true"] {
+      border-radius: 3px;
+      transition: background-color 0.15s ease, outline-color 0.15s ease;
+    }
+
+    [contenteditable="true"]:hover {
+      outline: 1px dashed #93c5fd;
+    }
+
+    [contenteditable="true"]:focus {
+      outline: 2px solid var(--ui-primary);
+      background-color: rgba(29, 78, 216, 0.04);
+    }
+
+    /* Shared Resume Typography & Content Structure */
+    .resume-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .resume-name {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--resume-text);
+    }
+
+    .resume-role {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--resume-accent);
+    }
+
+    .resume-contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      font-size: 0.86rem;
+      color: var(--resume-muted);
+      margin-top: 4px;
+    }
+
+    .resume-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .resume-main,
+    .resume-side {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .resume-section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--resume-accent);
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid var(--resume-border);
+    }
+
+    .resume-summary {
+      font-size: 0.92rem;
+      color: var(--resume-text);
+      line-height: 1.6;
+    }
+
+    .resume-item {
+      margin-bottom: 12px;
+    }
+
+    .resume-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .resume-item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .resume-item-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--resume-text);
+    }
+
+    .resume-item-date {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--resume-muted);
+      white-space: nowrap;
+    }
+
+    .resume-item-sub {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--resume-accent);
+      margin-bottom: 4px;
+    }
+
+    .resume-list {
+      padding-left: 18px;
+      font-size: 0.89rem;
+      color: var(--resume-text);
+    }
+
+    .resume-list li {
+      margin-bottom: 3px;
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      list-style: none;
+    }
+
+    .skill-tags li {
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background-color: var(--resume-accent-soft);
+      color: var(--resume-accent);
+      border: 1px solid #dbeafe;
+    }
+
+    /* ==========================================================================
+       7. TEMPLATE STYLES (Switchable via CSS-Only Radio Buttons)
+       ========================================================================== */
+
+    /* --- TEMPLATE 1: CLASSIC (Centered formal header, full divider rules) --- */
+    #tpl-classic:checked ~ .workspace .resume-sheet {
+      --resume-accent: #1e293b;
+      --resume-accent-soft: #f1f5f9;
+      --resume-border: #334155;
+    }
+
+    #tpl-classic:checked ~ .workspace .resume-header {
+      text-align: center;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--resume-border);
+    }
+
+    #tpl-classic:checked ~ .workspace .resume-contact {
+      justify-content: center;
+    }
+
+    #tpl-classic:checked ~ .workspace .skill-tags li {
+      border-color: #cbd5e1;
+      color: #1e293b;
+    }
+
+    /* --- TEMPLATE 2: MODERN (Bold banner header + 2-column Grid body) --- */
+    #tpl-modern:checked ~ .workspace .resume-sheet {
+      padding: 0;
+      gap: 0;
+      --resume-accent: #1d4ed8;
+      --resume-accent-soft: #eff6ff;
+      --resume-border: #bfdbfe;
+    }
+
+    #tpl-modern:checked ~ .workspace .resume-header {
+      background-color: #1e3a8a;
+      color: #ffffff;
+      padding: 34px 42px 28px 42px;
+    }
+
+    #tpl-modern:checked ~ .workspace .resume-name {
+      color: #ffffff;
+    }
+
+    #tpl-modern:checked ~ .workspace .resume-role {
+      color: #93c5fd;
+    }
+
+    #tpl-modern:checked ~ .workspace .resume-contact {
+      color: #e2e8f0;
+    }
+
+    #tpl-modern:checked ~ .workspace .resume-body {
+      display: grid;
+      grid-template-columns: 1.75fr 1fr;
+      gap: 28px;
+      padding: 32px 42px 42px 42px;
+      flex: 1;
+    }
+
+    #tpl-modern:checked ~ .workspace .resume-side {
+      background-color: #f8fafc;
+      padding: 20px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      align-self: start;
+    }
+
+    /* --- TEMPLATE 3: MINIMAL (Clean editorial spacing, monochrome, subtle borders) --- */
+    #tpl-minimal:checked ~ .workspace .resume-sheet {
+      --resume-accent: #111827;
+      --resume-accent-soft: transparent;
+      --resume-border: #e5e7eb;
+      padding: 48px 50px;
+      gap: 26px;
+    }
+
+    #tpl-minimal:checked ~ .workspace .resume-header {
+      padding-bottom: 18px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    #tpl-minimal:checked ~ .workspace .resume-role {
+      color: var(--resume-muted);
+      font-weight: 500;
+    }
+
+    #tpl-minimal:checked ~ .workspace .resume-section-title {
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      color: var(--resume-muted);
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    #tpl-minimal:checked ~ .workspace .resume-item-sub {
+      color: var(--resume-muted);
+    }
+
+    #tpl-minimal:checked ~ .workspace .skill-tags {
+      gap: 6px 14px;
+    }
+
+    #tpl-minimal:checked ~ .workspace .skill-tags li {
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: var(--resume-text);
+      font-weight: 500;
+    }
+
+    #tpl-minimal:checked ~ .workspace .skill-tags li::before {
+      content: "• ";
+      color: #9ca3af;
+    }
+
+    /* ==========================================================================
+       8. RESPONSIVE DESIGN (Stack vertically below 768px)
+       ========================================================================== */
+    @media (max-width: 768px) {
+      .app-header {
+        position: static;
+        padding: 14px 16px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .resume-sheet {
+        min-height: auto;
+        padding: 26px 22px;
+      }
+
+      #tpl-modern:checked ~ .workspace .resume-header {
+        padding: 24px 22px;
+      }
+
+      #tpl-modern:checked ~ .workspace .resume-body {
+        grid-template-columns: 1fr;
+        padding: 22px;
+      }
+
+      #tpl-minimal:checked ~ .workspace .resume-sheet {
+        padding: 28px 22px;
+      }
+
+      .resume-item-head {
+        flex-direction: column;
+        gap: 2px;
+      }
+    }
+
+    /* ==========================================================================
+       9. PRINT STYLES (Only the A4 resume prints; hide editor & UI controls)
+       ========================================================================== */
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      body {
+        background-color: #ffffff;
+      }
+
+      .app-header,
+      .print-guide-banner,
+      .editor-panel,
+      .preview-hint {
+        display: none !important;
+      }
+
+      .workspace {
+        display: block;
+        max-width: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .preview-panel {
+        display: block;
+      }
+
+      .resume-sheet {
+        width: 210mm;
+        min-height: 297mm;
+        max-width: none;
+        box-shadow: none;
+        border-radius: 0;
+        margin: 0;
+      }
+
+      [contenteditable="true"]:hover,
+      [contenteditable="true"]:focus {
+        outline: none;
+        background-color: transparent;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CSS-Only State Inputs (Must precede .app-header and .workspace for ~ combinator) -->
+  <input type="radio" name="resume-template" id="tpl-classic" class="sr-only" checked />
+  <input type="radio" name="resume-template" id="tpl-modern" class="sr-only" />
+  <input type="radio" name="resume-template" id="tpl-minimal" class="sr-only" />
+  <input type="checkbox" id="print-guide-toggle" class="sr-only" />
+
+  <!-- Top Application Toolbar -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-title">Online Resume Builder</span>
+      <span class="brand-subtitle">Pure HTML &amp; CSS &bull; Switch templates or click preview text to edit</span>
+    </div>
+
+    <div class="toolbar-controls">
+      <div class="template-switcher" role="group" aria-label="Resume Template Style">
+        <span class="switcher-label">Template:</span>
+        <label for="tpl-classic" class="tpl-btn">Classic</label>
+        <label for="tpl-modern" class="tpl-btn">Modern</label>
+        <label for="tpl-minimal" class="tpl-btn">Minimal</label>
+      </div>
+
+      <label for="print-guide-toggle" class="btn-print" role="button">
+        Download / Print
+      </label>
+    </div>
+  </header>
+
+  <!-- Pure CSS Print / Save-as-PDF Guide Banner -->
+  <div class="print-guide-banner" role="status">
+    <span>
+      <strong>Print / Save as PDF:</strong> Press <strong>Ctrl + P</strong> (Windows/Linux) or <strong>Cmd + P</strong> (Mac), set Destination to <em>Save as PDF</em>, and enable <em>Background graphics</em> for best results.
+    </span>
+    <label for="print-guide-toggle" class="btn-close-guide">Close</label>
+  </div>
+
+  <!-- Main Two-Column Workspace -->
+  <div class="workspace">
+
+    <!-- LEFT COLUMN: Accessible Form / Editor Panel -->
+    <aside class="editor-panel" aria-label="Resume Editor Form">
+      <h2 class="editor-heading">Resume Details</h2>
+      <p class="editor-note">
+        Structured editor for all resume sections. (To customize the A4 sheet directly without JavaScript, click any text in the preview on the right.)
+      </p>
+
+      <form class="resume-form" action="#" method="get">
+
+        <!-- 1. Personal Info -->
+        <fieldset class="form-section">
+          <legend>Personal Information</legend>
+          <div class="form-grid">
+            <div class="field full-width">
+              <label for="full-name">Full Name</label>
+              <input type="text" id="full-name" name="full-name" value="Ananya Verma" placeholder="e.g., Ananya Verma" />
+            </div>
+
+            <div class="field full-width">
+              <label for="job-title">Job Title / Headline</label>
+              <input type="text" id="job-title" name="job-title" value="B.Tech Biotechnology Undergraduate &amp; Python/Web Developer" placeholder="e.g., Software Developer" />
+            </div>
+
+            <div class="field">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" value="ananya.verma@email.com" placeholder="you@example.com" />
+            </div>
+
+            <div class="field">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" name="phone" value="+91 98765 43210" placeholder="+91 98765 43210" />
+            </div>
+
+            <div class="field">
+              <label for="location">Location</label>
+              <input type="text" id="location" name="location" value="New Delhi, India" placeholder="City, Country" />
+            </div>
+
+            <div class="field">
+              <label for="links">Portfolio / LinkedIn / GitHub</label>
+              <input type="url" id="links" name="links" value="https://linkedin.com/in/ananya-verma" placeholder="https://linkedin.com/in/..." />
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 2. Professional Summary -->
+        <fieldset class="form-section">
+          <legend>Professional Summary</legend>
+          <div class="field">
+            <label for="summary">Career Objective / Summary</label>
+            <textarea id="summary" name="summary" rows="3" placeholder="Summarize your skills, academic focus, and career goals...">Motivated first-year B.Tech Biotechnology student with practical foundations in HTML, CSS, Python, and SQL. Passionate about building clean web interfaces and applying computational tools to biological data.</textarea>
+          </div>
+        </fieldset>
+
+        <!-- 3. Work Experience (3 Entries) -->
+        <fieldset class="form-section">
+          <legend>Work Experience (Up to 3 Entries)</legend>
+
+          <!-- Entry 1 -->
+          <div class="entry-group">
+            <div class="entry-title">Experience 1</div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="exp1-company">Company / Organization</label>
+                <input type="text" id="exp1-company" name="exp1-company" value="Campus BioTech &amp; Coding Club" />
+              </div>
+              <div class="field">
+                <label for="exp1-role">Role</label>
+                <input type="text" id="exp1-role" name="exp1-role" value="Junior Web Volunteer" />
+              </div>
+              <div class="field full-width">
+                <label for="exp1-dates">Dates</label>
+                <input type="text" id="exp1-dates" name="exp1-dates" value="Aug 2026 – Present" />
+              </div>
+              <div class="field full-width">
+                <label for="exp1-desc">Description</label>
+                <textarea id="exp1-desc" name="exp1-desc" rows="2">Designed event landing pages using semantic HTML and CSS Flexbox, improving workshop registration clarity for 150+ students.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Entry 2 -->
+          <div class="entry-group">
+            <div class="entry-title">Experience 2</div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="exp2-company">Company / Organization</label>
+                <input type="text" id="exp2-company" name="exp2-company" value="BioData Summer Workshop" />
+              </div>
+              <div class="field">
+                <label for="exp2-role">Role</label>
+                <input type="text" id="exp2-role" name="exp2-role" value="Student Trainee" />
+              </div>
+              <div class="field full-width">
+                <label for="exp2-dates">Dates</label>
+                <input type="text" id="exp2-dates" name="exp2-dates" value="Jun 2026 – Jul 2026" />
+              </div>
+              <div class="field full-width">
+                <label for="exp2-desc">Description</label>
+                <textarea id="exp2-desc" name="exp2-desc" rows="2">Practiced Python scripting and SQL queries to clean and organize sample laboratory assay datasets.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Entry 3 -->
+          <div class="entry-group">
+            <div class="entry-title">Experience 3 (Optional)</div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="exp3-company">Company / Organization</label>
+                <input type="text" id="exp3-company" name="exp3-company" placeholder="e.g., XYZ Labs" />
+              </div>
+              <div class="field">
+                <label for="exp3-role">Role</label>
+                <input type="text" id="exp3-role" name="exp3-role" placeholder="e.g., Intern" />
+              </div>
+              <div class="field full-width">
+                <label for="exp3-dates">Dates</label>
+                <input type="text" id="exp3-dates" name="exp3-dates" placeholder="e.g., May 2026 – Jul 2026" />
+              </div>
+              <div class="field full-width">
+                <label for="exp3-desc">Description</label>
+                <textarea id="exp3-desc" name="exp3-desc" rows="2" placeholder="Key responsibilities and measurable impact..."></textarea>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 4. Education -->
+        <fieldset class="form-section">
+          <legend>Education</legend>
+          <div class="entry-group">
+            <div class="entry-title">Education 1</div>
+            <div class="form-grid">
+              <div class="field full-width">
+                <label for="edu1-school">School / University</label>
+                <input type="text" id="edu1-school" name="edu1-school" value="Institute of Technology &amp; Sciences" />
+              </div>
+              <div class="field">
+                <label for="edu1-degree">Degree / Program</label>
+                <input type="text" id="edu1-degree" name="edu1-degree" value="B.Tech in Biotechnology" />
+              </div>
+              <div class="field">
+                <label for="edu1-dates">Dates</label>
+                <input type="text" id="edu1-dates" name="edu1-dates" value="2026 – 2030" />
+              </div>
+            </div>
+          </div>
+
+          <div class="entry-group">
+            <div class="entry-title">Education 2</div>
+            <div class="form-grid">
+              <div class="field full-width">
+                <label for="edu2-school">School / Board</label>
+                <input type="text" id="edu2-school" name="edu2-school" value="Delhi Public Senior Secondary School (CBSE)" />
+              </div>
+              <div class="field">
+                <label for="edu2-degree">Degree / Certificate</label>
+                <input type="text" id="edu2-degree" name="edu2-degree" value="Class XII (Science) — 91%" />
+              </div>
+              <div class="field">
+                <label for="edu2-dates">Dates</label>
+                <input type="text" id="edu2-dates" name="edu2-dates" value="2026" />
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 5. Skills -->
+        <fieldset class="form-section">
+          <legend>Skills</legend>
+          <div class="field">
+            <label for="skills">Technical &amp; Soft Skills (comma-separated)</label>
+            <textarea id="skills" name="skills" rows="2" placeholder="HTML5, CSS3, Python, SQL, Git...">HTML5, CSS3, Python, SQL, Responsive Design, Data Organization, Lab Documentation</textarea>
+          </div>
+        </fieldset>
+
+        <!-- 6. Projects or Certifications -->
+        <fieldset class="form-section">
+          <legend>Projects &amp; Certifications</legend>
+          <div class="field">
+            <label for="projects">Key Projects</label>
+            <textarea id="projects" name="projects" rows="3">Online Resume Builder (HTML &amp; CSS): Built a responsive, printable A4 resume builder with switchable templates.
+Student Lab Database (Python &amp; SQL): Created a CLI script to record and query sample test results.</textarea>
+          </div>
+          <div class="field">
+            <label for="certifications">Certifications</label>
+            <textarea id="certifications" name="certifications" rows="2">Project on HTML CSS – Online Resume Builder (Infosys Springboard, 2026)</textarea>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <button type="reset" class="btn-secondary">Reset Form</button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- RIGHT COLUMN: A4 Live-Looking Resume Preview -->
+    <main class="preview-panel" aria-label="Resume Preview">
+      <div class="preview-hint">
+        A4 Live Preview &mdash; Click any text below to edit directly before printing
+      </div>
+
+      <article class="resume-sheet" aria-label="Formatted A4 Resume">
+
+        <!-- Header -->
+        <header class="resume-header">
+          <h1 class="resume-name" contenteditable="true">Ananya Verma</h1>
+          <p class="resume-role" contenteditable="true">B.Tech Biotechnology Undergraduate &amp; Python/Web Developer</p>
+          <div class="resume-contact">
+            <span contenteditable="true">ananya.verma@email.com</span>
+            <span contenteditable="true">+91 98765 43210</span>
+            <span contenteditable="true">New Delhi, India</span>
+            <span contenteditable="true">linkedin.com/in/ananya-verma</span>
+          </div>
+        </header>
+
+        <!-- Body (Single-column in Classic/Minimal, 2-column Grid in Modern) -->
+        <div class="resume-body">
+
+          <!-- Primary Column -->
+          <div class="resume-main">
+            <section aria-labelledby="sec-summary">
+              <h2 id="sec-summary" class="resume-section-title">Professional Summary</h2>
+              <p class="resume-summary" contenteditable="true">
+                Motivated first-year B.Tech Biotechnology student with practical foundations in HTML, CSS, Python, and SQL. Passionate about building clean web interfaces and applying computational tools to biological data.
+              </p>
+            </section>
+
+            <section aria-labelledby="sec-experience">
+              <h2 id="sec-experience" class="resume-section-title">Work Experience</h2>
+
+              <div class="resume-item">
+                <div class="resume-item-head">
+                  <h3 class="resume-item-title" contenteditable="true">Junior Web Volunteer</h3>
+                  <span class="resume-item-date" contenteditable="true">Aug 2026 – Present</span>
+                </div>
+                <p class="resume-item-sub" contenteditable="true">Campus BioTech &amp; Coding Club</p>
+                <ul class="resume-list" contenteditable="true">
+                  <li>Designed event landing pages using semantic HTML5 and CSS Flexbox for 150+ student attendees.</li>
+                  <li>Improved readability and mobile responsiveness across club announcement pages.</li>
+                </ul>
+              </div>
+
+              <div class="resume-item">
+                <div class="resume-item-head">
+                  <h3 class="resume-item-title" contenteditable="true">Student Trainee</h3>
+                  <span class="resume-item-date" contenteditable="true">Jun 2026 – Jul 2026</span>
+                </div>
+                <p class="resume-item-sub" contenteditable="true">BioData Summer Workshop</p>
+                <ul class="resume-list" contenteditable="true">
+                  <li>Practiced Python scripting and SQL queries to clean and organize sample laboratory assay datasets.</li>
+                  <li>Documented structured schemas for tracking experiment metadata.</li>
+                </ul>
+              </div>
+            </section>
+
+            <section aria-labelledby="sec-projects">
+              <h2 id="sec-projects" class="resume-section-title">Projects</h2>
+
+              <div class="resume-item">
+                <div class="resume-item-head">
+                  <h3 class="resume-item-title" contenteditable="true">Online Resume Builder</h3>
+                  <span class="resume-item-date" contenteditable="true">HTML5 &amp; CSS3</span>
+                </div>
+                <ul class="resume-list" contenteditable="true">
+                  <li>Built a two-column resume builder interface with responsive breakpoints and A4 print stylesheet rules.</li>
+                  <li>Implemented CSS-only template switching across Classic, Modern, and Minimal layouts.</li>
+                </ul>
+              </div>
+
+              <div class="resume-item">
+                <div class="resume-item-head">
+                  <h3 class="resume-item-title" contenteditable="true">Student Lab Database</h3>
+                  <span class="resume-item-date" contenteditable="true">Python &amp; SQL</span>
+                </div>
+                <ul class="resume-list" contenteditable="true">
+                  <li>Created a menu-driven Python script to store, search, and update experiment records in an SQL database.</li>
+                </ul>
+              </div>
+            </section>
+          </div>
+
+          <!-- Secondary Column (Stacks naturally in Classic/Minimal, becomes right sidebar in Modern) -->
+          <div class="resume-side">
+            <section aria-labelledby="sec-education">
+              <h2 id="sec-education" class="resume-section-title">Education</h2>
+
+              <div class="resume-item">
+                <div class="resume-item-head">
+                  <h3 class="resume-item-title" contenteditable="true">B.Tech in Biotechnology</h3>
+                  <span class="resume-item-date" contenteditable="true">2026 – 2030</span>
+                </div>
+                <p class="resume-item-sub" contenteditable="true">Institute of Technology &amp; Sciences</p>
+                <p class="resume-summary" contenteditable="true">Relevant Coursework: Fundamentals of Computer &amp; Programming, Cell Biology.</p>
+              </div>
+
+              <div class="resume-item">
+                <div class="resume-item-head">
+                  <h3 class="resume-item-title" contenteditable="true">Class XII (Science)</h3>
+                  <span class="resume-item-date" contenteditable="true">2026</span>
+                </div>
+                <p class="resume-item-sub" contenteditable="true">Delhi Public Senior Secondary School</p>
+                <p class="resume-summary" contenteditable="true">Aggregate: 91% (CBSE)</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="sec-skills">
+              <h2 id="sec-skills" class="resume-section-title">Skills</h2>
+              <ul class="skill-tags" contenteditable="true">
+                <li>HTML5</li>
+                <li>CSS3</li>
+                <li>Python</li>
+                <li>SQL</li>
+                <li>Responsive Design</li>
+                <li>Data Organization</li>
+                <li>Lab Documentation</li>
+              </ul>
+            </section>
+
+            <section aria-labelledby="sec-certs">
+              <h2 id="sec-certs" class="resume-section-title">Certifications</h2>
+              <ul class="resume-list" contenteditable="true">
+                <li>Project on HTML CSS – Online Resume Builder (Infosys Springboard, 2026)</li>
+                <li>Python &amp; SQL Foundations Coursework</li>
+              </ul>
+            </section>
+          </div>
+
+        </div>
+      </article>
+    </main>
+
+  </div>
+</body>
+</html>
